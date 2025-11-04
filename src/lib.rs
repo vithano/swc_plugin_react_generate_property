@@ -215,6 +215,13 @@ pub fn transform(mut program: Program, metadata: TransformPluginProgramMetadata)
     let mut state = State::new(opts, &metadata);
 
     // If the path is clearly junk, just return
+        eprintln!(
+        "[SWC] file='{}' file_identifier='{}' match_regex='{:?}' should_apply={}",
+        state.filename,
+        state.file_identifier,
+        state.match_regex,
+        state.should_apply_on_file()
+    );
     if state.filename.is_empty() { return program; }
 
     program.visit_mut_with(&mut ReactGenerateProperty { st: &mut state });
@@ -283,7 +290,16 @@ impl<'a> VisitMut for ReactGenerateProperty<'a> {
         };
 
         let filtering_ok = ok_file_match && match_first_child_rule;
-
+        eprintln!(
+        "[SWC] JSX <{}> filtering_ok={} data_exists={} parent={} previous={} idx={} class='{}'",
+        node_name,
+        filtering_ok,
+        data_prop_exists,
+        parent_name,
+        self.st.previous_node_name,
+        self.st.index,
+        class_name
+    );
         // Not Fragment, has name, attribute not present yet
         if filtering_ok && !data_prop_exists && !node_name.is_empty() && node_name != "Fragment" {
             let regex_prefix = self.st.filename_regex_capture();
@@ -301,6 +317,12 @@ impl<'a> VisitMut for ReactGenerateProperty<'a> {
             );
 
             // push attribute
+            eprintln!(
+            "[SWC] ✅ Adding {}='{}' to <{}>",
+            self.st.opts.custom_property,
+            name,
+            node_name
+        );
             n.opening.attrs.push(JSXAttrOrSpread::JSXAttr(JSXAttr {
                 span: DUMMY_SP,
                 name: JSXAttrName::Ident(IdentName {
