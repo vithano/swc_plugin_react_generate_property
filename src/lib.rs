@@ -3,7 +3,6 @@ use serde::Deserialize;
 use std::path::Path;
 use swc_core::ecma::ast::IdentName;
 use swc_core::plugin::metadata::TransformPluginMetadataContextKind as Ctx;
-use swc_core::plugin::errors::HANDLER;
 use swc_core::{
     common::{DUMMY_SP},
     ecma::{
@@ -215,12 +214,6 @@ pub fn transform(mut program: Program, metadata: TransformPluginProgramMetadata)
     let mut state = State::new(opts, &metadata);
 
     // If the path is clearly junk, just return
-      HANDLER.with(|h| {
-        h.struct_span_warn(DUMMY_SP, &format!(
-            "[SWC:init] file='{}' id='{}' regex='{:?}' should_apply={}",
-            state.filename, state.file_identifier, state.match_regex, state.should_apply_on_file()
-        )).emit();
-    });
     if state.filename.is_empty() { return program; }
 
     program.visit_mut_with(&mut ReactGenerateProperty { st: &mut state });
@@ -289,13 +282,6 @@ impl<'a> VisitMut for ReactGenerateProperty<'a> {
         };
 
         let filtering_ok = ok_file_match && match_first_child_rule;
-       HANDLER.with(|h| {
-    h.struct_span_warn(DUMMY_SP, &format!(
-        "[SWC:node] <{}> filtering_ok={} has_data={} prev={} idx={} parent={} class='{}'",
-        node_name, filtering_ok, data_prop_exists, self.st.previous_node_name,
-        self.st.index, parent_name, class_name
-    )).emit();
-});
         // Not Fragment, has name, attribute not present yet
         if filtering_ok && !data_prop_exists && !node_name.is_empty() && node_name != "Fragment" {
             let regex_prefix = self.st.filename_regex_capture();
@@ -313,12 +299,6 @@ impl<'a> VisitMut for ReactGenerateProperty<'a> {
             );
 
             // push attribute
-         HANDLER.with(|h| {
-    h.struct_span_warn(DUMMY_SP, &format!(
-        "[SWC:add] {}='{}' -> <{}>",
-        self.st.opts.custom_property, name, node_name
-    )).emit();
-});
 
             n.opening.attrs.push(JSXAttrOrSpread::JSXAttr(JSXAttr {
                 span: DUMMY_SP,

@@ -1,6 +1,6 @@
 {
   "name": "vithano-swc-plugin-react-generate-property",
-  "version": "0.1.4",
+  "version": "1.0.0",
   "description": "SWC plugin that replicates babel-plugin-react-generate-property behavior",
   "main": "index.js",
   "files": [
