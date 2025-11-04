@@ -4,7 +4,6 @@ use std::path::Path;
 use swc_core::ecma::ast::IdentName;
 use swc_core::plugin::metadata::TransformPluginMetadataContextKind as Ctx;
 use swc_core::plugin::errors::HANDLER;
-
 use swc_core::{
     common::{DUMMY_SP},
     ecma::{
@@ -343,8 +342,7 @@ impl<'a> VisitMut for ReactGenerateProperty<'a> {
             self.st.previous_node_name = node_name.clone();
         }
 
-        // Now visit children
-        n.children.visit_mut_with(self);
+        n.visit_mut_children_with(self);
 
         // Pop parent
         self.st.parent_stack.pop();
