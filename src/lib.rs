@@ -98,10 +98,13 @@ impl State {
             opts.omit_file_name,
         );
 
-        let match_regex = opts
-            .r#match
-            .as_ref()
-            .and_then(|s| Regex::new(s).ok());
+        let match_regex = opts.r#match.as_ref().and_then(|s| {
+            let trimmed = s.trim();
+            let body = if trimmed.starts_with('/') && trimmed.ends_with('/') && trimmed.len() >= 2 {
+                &trimmed[1..trimmed.len()-1]
+            } else { trimmed };
+            Regex::new(body).ok()
+        });
 
         Self {
             opts,
@@ -145,7 +148,11 @@ fn compute_file_identifier(
     let p = Path::new(filename);
 
     // Split by user slash char (not necessarily OS separator)
-    let splits: Vec<&str> = filename.split(slash).collect();
+    let splits: Vec<&str> = if filename.contains(slash) {
+        filename.split(slash).collect()
+    } else {
+        filename.split(std::path::MAIN_SEPARATOR).collect()
+    };
 
     let root_len = root.len();
     let relative = if filename.len() >= root_len && &filename[..root_len] == root {
@@ -208,9 +215,7 @@ pub fn transform(mut program: Program, metadata: TransformPluginProgramMetadata)
     let mut state = State::new(opts, &metadata);
 
     // If the path is clearly junk, just return
-    if state.filename.is_empty() || state.file_identifier.is_empty() {
-        return program;
-    }
+    if state.filename.is_empty() { return program; }
 
     program.visit_mut_with(&mut ReactGenerateProperty { st: &mut state });
     program
